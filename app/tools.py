@@ -23,12 +23,23 @@ from app.mcp_client import (
     parse_workweek_profile,
 )
 
-# Audit trail of tool invocations and security overrides for verification & evaluation
-tool_execution_audit_log: list[dict[str, Any]] = []
+from app.gcp_services import write_audit_entry_to_gcp
+
+
+class GcpAuditLogList(list):
+    """Audit log list that automatically writes every appended event to Google Cloud Logging & Cloud Firestore."""
+
+    def append(self, item: dict[str, Any]) -> None:
+        super().append(item)
+        write_audit_entry_to_gcp(item)
+
+
+# Audit trail of tool invocations and security overrides streamed live to Cloud Logging & Firestore
+tool_execution_audit_log: GcpAuditLogList = GcpAuditLogList()
 
 
 def clear_audit_log() -> None:
-    """Clears the tool execution audit log before each evaluation case."""
+    """Clears the local in-memory audit buffer before each evaluation case while retaining cloud logs."""
     tool_execution_audit_log.clear()
 
 

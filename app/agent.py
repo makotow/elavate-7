@@ -20,6 +20,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
+from app.gcp_services import save_session_turn_to_firestore
 from app.security import (
     check_input_safety,
     current_authenticated_employee_id,
@@ -76,7 +77,18 @@ root_agent = Agent(
     ),
 )
 
-# Shared in-memory session service for local execution & evaluation
+_fallback_agent = Agent(
+    name="hr_orchestrator_fallback_agent",
+    model="gemini-2.5-flash",
+    description="Enterprise HR Agentic Orchestrator fallback agent.",
+    instruction=SYSTEM_INSTRUCTION,
+    tools=ALL_TOOLS,
+    generate_content_config=types.GenerateContentConfig(
+        temperature=0.0,
+    ),
+)
+
+# Shared session service for local execution & evaluation
 _session_service = InMemorySessionService()
 
 
@@ -88,15 +100,6 @@ async def run_hr_agent_turn(
 ) -> dict[str, Any]:
     """Executes a complete turn against the HR Agent with pre-inference Model Armor
     and post-inference Cloud SDP SPII redaction.
-
-    Args:
-        prompt: The user natural language input.
-        employee_id: Authenticated Employee ID extracted from X-Composite-Token.
-        session_id: Conversation session identifier.
-        reset_audit: Whether to clear tool_execution_audit_log before running.
-
-    Returns:
-        Dictionary containing the final redacted response, safety status, and tool audit trail.
     """
     current_authenticated_employee_id.set(employee_id)
     if reset_audit:
@@ -122,26 +125,43 @@ async def run_hr_agent_turn(
             "audit_log": list(tool_execution_audit_log),
         }
 
-    # 2. Execute ADK Runner
-    runner = Runner(
-        agent=root_agent,
-        app_name="app",
-        session_service=_session_service,
-        auto_create_session=True,
-    )
-
+    # 2. Execute ADK Runner with automatic fallback on PREFILL_QUEUE_OVERLOADED
     response_parts: list[str] = []
     new_msg = types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
 
-    async for event in runner.run_async(
-        user_id=employee_id,
-        session_id=session_id,
-        new_message=new_msg,
-    ):
-        if event.content and event.content.parts:
-            for part in event.content.parts:
-                if part.text:
-                    response_parts.append(part.text)
+    try:
+        runner = Runner(
+            agent=root_agent,
+            app_name="app",
+            session_service=_session_service,
+            auto_create_session=True,
+        )
+        async for event in runner.run_async(
+            user_id=employee_id,
+            session_id=session_id,
+            new_message=new_msg,
+        ):
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    if part.text:
+                        response_parts.append(part.text)
+    except Exception:
+        response_parts.clear()
+        fallback_runner = Runner(
+            agent=_fallback_agent,
+            app_name="app",
+            session_service=_session_service,
+            auto_create_session=True,
+        )
+        async for event in fallback_runner.run_async(
+            user_id=employee_id,
+            session_id=f"{session_id}-fb",
+            new_message=new_msg,
+        ):
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    if part.text:
+                        response_parts.append(part.text)
 
     raw_response = "\n".join(response_parts).strip()
 
@@ -153,6 +173,15 @@ async def run_hr_agent_turn(
             "\n\n[Cloud SDP Post-Inference Verification (NFR-2.3): "
             "Personal Phone ([REDACTED_PHONE]) and SSN ([REDACTED_SSN]) strictly masked]"
         )
+
+    # 4. Persist Conversation Session Turn to Live Cloud Firestore (`agent_sessions` collection)
+    save_session_turn_to_firestore(
+        session_id=session_id,
+        employee_id=employee_id,
+        prompt=prompt,
+        response=redacted_response,
+        safety_status=safety_res,
+    )
 
     return {
         "response": redacted_response,

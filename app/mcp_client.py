@@ -17,10 +17,17 @@ from mcp.client.streamable_http import streamable_http_client
 
 logger = logging.getLogger(__name__)
 
+import os
+
 # Remote MCP Endpoints
-WORKWEEK_MCP_URL = "https://mock-saas.aishprabhat.demo.altostrat.com/work-week/mcp/"
-SERVICE_IMMEDIATELY_MCP_URL = "https://mock-saas.aishprabhat.demo.altostrat.com/service-immediately/mcp/"
-MCP_TOKEN = "mcp_3DrXPfcezy8LEGYxXmB8eTAyrO2uJZbMBDSbBisSczg"
+WORKWEEK_MCP_URL = os.environ.get(
+    "WORKWEEK_MCP_URL", "https://mock-saas.aishprabhat.demo.altostrat.com/work-week/mcp/"
+)
+SERVICE_IMMEDIATELY_MCP_URL = os.environ.get(
+    "SERVICE_IMMEDIATELY_MCP_URL",
+    "https://mock-saas.aishprabhat.demo.altostrat.com/service-immediately/mcp/",
+)
+MCP_TOKEN = os.environ.get("MCP_TOKEN", "mcp_3DrXPfcezy8LEGYxXmB8eTAyrO2uJZbMBDSbBisSczg")
 
 # Default Authenticated Employee context bound to this MCP token
 DEFAULT_MCP_EMPLOYEE_ID = "EMP-769"

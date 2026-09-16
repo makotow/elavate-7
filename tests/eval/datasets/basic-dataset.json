@@ -1,0 +1,48 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "T1-01-policy-bereavement",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "How many days of paid bereavement leave am I entitled to if an immediate family member passes away?"
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "T1-02-policy-expense-limit",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "What is the maximum reimbursement limit for noise-canceling headphones under the home office expense policy?"
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "T2-02-live-mcp-leave-balances",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Employee EMP-769: Please check my current Vacation and Sick leave balances in WorkWeek."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "T3-01-live-mcp-ticket-details",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Can you retrieve the details and status of my ServiceImmediately ticket INC0004533?"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -243,7 +243,8 @@ class ServiceImmediatelyMockDB:
         }
 
     def enqueue_compensating_ticket(self, emp_id: str, leave_req_id: str, ticket_payload: dict[str, Any]) -> dict[str, Any]:
-        """Enqueues a failed cross-system ticket request to Cloud Pub/Sub fallback queue (NFR-4.3 Saga Compensation)."""
+        """Publishes a failed cross-system ticket request to live Google Cloud Pub/Sub (`hr-agent-saga-compensation` topic: NFR-4.3)."""
+        from app.gcp_services import publish_saga_compensation_to_pubsub
         esc_id = f"ESC-{len(self.pubsub_compensation_queue) + 5521}"
         event = {
             "escalation_id": esc_id,
@@ -253,7 +254,11 @@ class ServiceImmediatelyMockDB:
             "failed_service": "ServiceImmediately_API",
             "pending_ticket_payload": ticket_payload,
             "status": "QUEUED_IN_PUBSUB_FOR_AUTO_RETRY",
+            "pubsub_topic": "projects/elavate-508800/topics/hr-agent-saga-compensation",
         }
+        msg_id = publish_saga_compensation_to_pubsub(event)
+        if msg_id:
+            event["pubsub_message_id"] = msg_id
         self.pubsub_compensation_queue.append(event)
         return event
 

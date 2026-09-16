@@ -5,10 +5,11 @@ agent:
   framework: adk
   directory: app
   entry_point: app.agent:root_agent
+deployment_target: cloud_run
 deployment:
-  target: agent_runtime
+  target: cloud_run
   project_id: elavate-508800
-  region: global
+  region: us-central1
 evaluation:
   config_path: tests/eval/eval_config.yaml
   dataset_dir: tests/eval/datasets

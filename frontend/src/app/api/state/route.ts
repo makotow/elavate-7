@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.ADK_BACKEND_URL || "http://127.0.0.1:8000";
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  const BACKEND_URL = process.env.ADK_BACKEND_URL || "http://127.0.0.1:8000";
   try {
     const employeeId = req.nextUrl.searchParams.get("employee_id") || "EMP-769";
     const response = await fetch(`${BACKEND_URL}/api/state?employee_id=${encodeURIComponent(employeeId)}`, {
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST() {
+  const BACKEND_URL = process.env.ADK_BACKEND_URL || "http://127.0.0.1:8000";
   try {
     const response = await fetch(`${BACKEND_URL}/api/reset`, {
       method: "POST",

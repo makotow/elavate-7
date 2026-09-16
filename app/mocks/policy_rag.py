@@ -82,70 +82,11 @@ POLICY_DOCUMENTS: list[dict[str, Any]] = [
 ]
 
 
+from app.gcp_services import search_vertex_ai_search_handbook
+
+
 def search_policy_documents(query: str, category_filter: str | None = None) -> dict[str, Any]:
-    """Searches approved HR policy documents and returns grounded chunks with citation URLs and grounding score."""
-    q_lower = query.lower()
-
-    # Explicit unapproved policy topics (FR-5.4 Strict Refusal)
-    unapproved_topics = ["pet insurance", "veterinary", "for dogs", "for cats", "crypto reimbursement"]
-    if any(ut in q_lower for ut in unapproved_topics):
-        return {
-            "status": "NO_RELEVANT_POLICY_FOUND",
-            "grounding_score": 0.12,
-            "chunks": [],
-            "guardrail_instruction": (
-                "STRICT GROUNDING MANDATE (FR-5.4): Grounding score (0.12) is below threshold (0.75). "
-                "You MUST refuse to answer or speculate. State clearly that the requested topic is not covered in approved HR policies."
-            ),
-        }
-
-    stop_words = {"policy", "policies", "section", "benefit", "benefits", "corporate", "employee", "global", "guidelines", "work"}
-    matched_chunks = []
-
-    for doc in POLICY_DOCUMENTS:
-        score = 0.0
-        for kw in doc["keywords"]:
-            if kw in q_lower:
-                score += 0.35
-        # Check specific domain word match excluding generic stop words
-        if any(
-            word in doc["title"].lower() or word in doc["section"].lower()
-            for word in q_lower.split()
-            if len(word) > 3 and word not in stop_words
-        ):
-            score += 0.25
-
-        if score > 0:
-            capped_score = min(0.98, round(0.55 + score, 2))
-            matched_chunks.append({
-                "doc_id": doc["doc_id"],
-                "title": doc["title"],
-                "section": doc["section"],
-                "citation_url": doc["url"],
-                "citation_markdown": f"[{doc['title']} - {doc['section']}]({doc['url']})",
-                "content": doc["content"],
-                "grounding_score": capped_score,
-            })
-
-    matched_chunks.sort(key=lambda x: x["grounding_score"], reverse=True)
-
-    if not matched_chunks:
-        return {
-            "status": "NO_RELEVANT_POLICY_FOUND",
-            "grounding_score": 0.12,
-            "chunks": [],
-            "guardrail_instruction": (
-                "STRICT GROUNDING MANDATE (FR-5.4): Grounding score (0.12) is below threshold (0.75). "
-                "You MUST refuse to answer or speculate. State clearly that the requested topic is not covered in approved HR policies."
-            ),
-        }
-
-    top_score = matched_chunks[0]["grounding_score"]
-    return {
-        "status": "SUCCESS",
-        "grounding_score": top_score,
-        "chunks": matched_chunks[:3],
-        "guardrail_instruction": (
-            "MANDATORY CITATION RULE (FR-5.3): You MUST cite the exact `citation_markdown` link in your response."
-        ),
-    }
+    """Searches official corporate HR policy handbook (`knowledge/ALTOSTRAT SINGAPORE EMPLOYEE POLICY HANDBOOK & CONDUCT GUIDELINES.pdf`)
+    using live Google Cloud Vertex AI Search (Agent Search / Discovery Engine `hr-handbook-ds`).
+    """
+    return search_vertex_ai_search_handbook(query, category_filter)

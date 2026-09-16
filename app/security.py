@@ -8,7 +8,11 @@ from typing import Any
 # Context variable holding the currently authenticated employee ID for the active request/turn
 current_authenticated_employee_id: ContextVar[str] = ContextVar("current_authenticated_employee_id", default="EMP-9021")
 
-SECRET_HMAC_KEY = b"hr-agent-mvp1-composite-token-secret-key-2026"
+import os
+
+SECRET_HMAC_KEY = os.environ.get(
+    "SECRET_HMAC_KEY", "hr-agent-mvp1-composite-token-secret-key-2026"
+).encode("utf-8")
 
 
 def generate_composite_token(employee_id: str) -> str:
@@ -80,16 +84,9 @@ def check_input_safety(prompt: str) -> dict[str, Any]:
     return {"allowed": True, "category": "SAFE", "reason": "Passed Model Armor Input Guardrails."}
 
 
+from app.gcp_services import redact_spii_with_cloud_dlp
+
+
 def redact_spii(text: str) -> str:
-    """Emulates Cloud Sensitive Data Protection (Basic SDP) inline SPII masking (FR-1.4, NFR-1.3)."""
-    if not text:
-        return text
-    # Mask international/US/JP phone numbers (e.g., +1-206-555-0199, 090-1234-5678, (212) 555-0001)
-    redacted = re.sub(
-        r"(\+\d{1,3}[\s\-]?)?\(?\d{2,4}\)?[\s\-]\d{3,4}[\s\-]\d{4}",
-        "[REDACTED_PHONE]",
-        text,
-    )
-    # Mask SSN / My Number patterns (XXX-XX-XXXX)
-    redacted = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "[REDACTED_SSN]", redacted)
-    return redacted
+    """Executes Google Cloud Sensitive Data Protection (Cloud DLP API `content:deidentify`) inline SPII masking (FR-1.4, NFR-1.3)."""
+    return redact_spii_with_cloud_dlp(text)

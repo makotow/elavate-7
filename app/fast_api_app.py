@@ -158,7 +158,8 @@ async def reset_demo_environment() -> dict[str, Any]:
 @app.get("/", response_class=HTMLResponse)
 async def serve_interactive_portal() -> str:
     """Redirect or serve a clean fallback message pointing to Next.js frontend."""
-    return """<!DOCTYPE html>
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -180,7 +181,7 @@ async def serve_interactive_portal() -> str:
     <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-4 text-left text-sm text-slate-700 mb-6 space-y-2">
       <div class="flex items-center justify-between">
         <span class="font-semibold text-blue-950">FastAPI API Backend:</span>
-        <span class="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold">ONLINE (:8000)</span>
+        <span class="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold">ONLINE</span>
       </div>
       <div class="flex items-center justify-between">
         <span class="font-semibold text-blue-950">FastMCP WorkWeek & ITSM:</span>
@@ -188,12 +189,12 @@ async def serve_interactive_portal() -> str:
       </div>
       <div class="flex items-center justify-between">
         <span class="font-semibold text-blue-950">Next.js Web Portal:</span>
-        <span class="text-xs px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full font-bold">PORT 3000</span>
+        <span class="text-xs px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full font-bold">ONLINE</span>
       </div>
     </div>
 
-    <a href="http://localhost:3000" class="inline-block w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-600/20">
-      モダン Web ポータルを開く (localhost:3000)
+    <a href="{frontend_url}" class="inline-block w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-600/20">
+      モダン Web ポータルを開く ({frontend_url})
     </a>
   </div>
 </body>
