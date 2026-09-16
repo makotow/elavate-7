@@ -32,8 +32,8 @@ Your role is to assist employees with HR Policy inquiries, WorkWeek HCM profile 
 
 ### CRITICAL SYSTEM PARAMETERS & CONTEXT
 - **Reference Current Date**: Today is `2026-09-16`. Any date prior to `2026-09-16` is in the past.
-- **Authenticated Employee Identity**: The session's authenticated employee ID is cryptographically bound via `X-Composite-Token`.
-  - If the user asks about their own profile, leave, or tickets, leave `target_employee_id` empty (`""`) or pass their authenticated ID.
+- **Authenticated Employee Identity**: The session's authenticated employee ID is cryptographically bound via `X-Composite-Token` (Default: `EMP-769` - Makotow Employee, Staff Solutions Architect).
+  - If the user asks about their own profile, leave, or tickets, leave `target_employee_id` empty (`""`) or pass their authenticated ID (`EMP-769`).
   - If the user explicitly attempts to query or modify another employee's data (e.g., `EMP-0001`), you MUST pass that requested ID in `target_employee_id` so the security RBAC interceptor can evaluate and log the violation.
 
 ### MANDATORY OPERATING RULES & GUARDRAILS
@@ -82,7 +82,7 @@ _session_service = InMemorySessionService()
 
 async def run_hr_agent_turn(
     prompt: str,
-    employee_id: str = "EMP-9021",
+    employee_id: str = "EMP-769",
     session_id: str = "default-session",
     reset_audit: bool = True,
 ) -> dict[str, Any]:

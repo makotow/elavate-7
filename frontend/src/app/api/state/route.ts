@@ -4,7 +4,7 @@ const BACKEND_URL = process.env.ADK_BACKEND_URL || "http://127.0.0.1:8000";
 
 export async function GET(req: NextRequest) {
   try {
-    const employeeId = req.nextUrl.searchParams.get("employee_id") || "EMP-9021";
+    const employeeId = req.nextUrl.searchParams.get("employee_id") || "EMP-769";
     const response = await fetch(`${BACKEND_URL}/api/state?employee_id=${encodeURIComponent(employeeId)}`, {
       cache: "no-store",
     });

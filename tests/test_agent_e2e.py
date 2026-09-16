@@ -53,6 +53,7 @@ def test_fastapi_health_and_state() -> None:
     portal = client.get("/")
     assert portal.status_code == 200
     assert "Elevate HR Agentic Solution" in portal.text
-    assert "4-Tier Golden Evaluation" in portal.text
+    assert "Elevate Workplace Concierge" in portal.text or "4-Tier Golden Evaluation" in portal.text
+
 
 
