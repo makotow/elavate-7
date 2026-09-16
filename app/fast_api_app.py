@@ -56,8 +56,9 @@ async def health_check() -> dict[str, Any]:
         "status": "healthy",
         "service": "hr-agentic-solution-mvp1",
         "adk_version": "2.9.1",
+        "model": "gemini-3.8-flash",
         "gcp_project": "elavate-508800",
-        "gcp_location": os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1"),
+        "gcp_location": os.environ.get("GOOGLE_CLOUD_LOCATION", "global"),
         "mcp_enabled": True,
         "mcp_employee_id": DEFAULT_MCP_EMPLOYEE_ID,
     }

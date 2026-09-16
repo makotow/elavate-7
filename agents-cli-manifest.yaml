@@ -8,7 +8,7 @@ agent:
 deployment:
   target: agent_runtime
   project_id: elavate-508800
-  region: us-central1
+  region: global
 evaluation:
   config_path: tests/eval/eval_config.yaml
   dataset_dir: tests/eval/datasets

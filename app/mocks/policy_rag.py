@@ -87,7 +87,7 @@ def search_policy_documents(query: str, category_filter: str | None = None) -> d
     q_lower = query.lower()
 
     # Explicit unapproved policy topics (FR-5.4 Strict Refusal)
-    unapproved_topics = ["pet insurance", "veterinary", "dog", "cat", "crypto reimbursement"]
+    unapproved_topics = ["pet insurance", "veterinary", "for dogs", "for cats", "crypto reimbursement"]
     if any(ut in q_lower for ut in unapproved_topics):
         return {
             "status": "NO_RELEVANT_POLICY_FOUND",

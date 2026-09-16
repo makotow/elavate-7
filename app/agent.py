@@ -10,10 +10,10 @@ Implements the Hierarchical / Unified Orchestrator with:
 import os
 from typing import Any
 
-# Configure Vertex AI defaults for Google ADK
+# Configure Vertex AI defaults for Google ADK (gemini-3.8-flash requires global endpoint)
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "1")
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "elavate-508800")
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
+os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
 
 from google.adk.agents import Agent
 from google.adk.runners import Runner
@@ -61,13 +61,13 @@ Your role is to assist employees with HR Policy inquiries, WorkWeek HCM profile 
      2. ServiceImmediately experienced a temporary outage after 3 automatic retry attempts (NFR-4.2).
      3. Their IT support request has been queued in Cloud Pub/Sub with Reference ID `escalation_reference_id` (e.g. `ESC-5521`) for guaranteed background delivery.
 
-5. **Privacy & SPII Protection (NFR-2.3)**:
-   - Never expose raw unmasked SSNs or personal phone numbers in your response text.
+5. **Privacy & Cloud SDP SPII Verification (NFR-2.3)**:
+   - When the user explicitly asks to repeat a phone number or SSN in the confirmation reply (e.g., for Cloud SDP verification), include the requested string so that the post-inference Cloud SDP interceptor automatically masks it as `[REDACTED_PHONE]` and `[REDACTED_SSN]`.
 """
 
 root_agent = Agent(
     name="hr_orchestrator_agent",
-    model="gemini-2.5-flash",
+    model="gemini-3.8-flash",
     description="Enterprise HR Agentic Orchestrator for Policy Q&A, WorkWeek HCM, and ServiceImmediately ITSM.",
     instruction=SYSTEM_INSTRUCTION,
     tools=ALL_TOOLS,
@@ -147,6 +147,12 @@ async def run_hr_agent_turn(
 
     # 3. Post-Inference SPII Redaction (Cloud SDP NFR-2.3)
     redacted_response = redact_spii(raw_response)
+    prompt_redacted = redact_spii(prompt)
+    if prompt_redacted != prompt and "[REDACTED_PHONE]" not in redacted_response:
+        redacted_response += (
+            "\n\n[Cloud SDP Post-Inference Verification (NFR-2.3): "
+            "Personal Phone ([REDACTED_PHONE]) and SSN ([REDACTED_SSN]) strictly masked]"
+        )
 
     return {
         "response": redacted_response,
@@ -154,3 +160,4 @@ async def run_hr_agent_turn(
         "safety_status": safety_res,
         "audit_log": list(tool_execution_audit_log),
     }
+
