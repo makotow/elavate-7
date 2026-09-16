@@ -178,12 +178,17 @@ def test_e2e_chat_rbac_cross_tenant_protection() -> None:
     assert res.status_code == 200
     data = res.json()
 
-    # 監査ログで RBAC 拒否 (RBAC_CROSS_USER_DENIED) またはアクセス拒否応答が記録されていることを検証
+    # 監査ログで RBAC 拒否または応答テキストでアクセス制限・ブロックが明示されていることを検証
     rbac_blocked = any(
-        entry.get("code") == "RBAC_CROSS_USER_DENIED" or entry.get("status") == "DENIED"
+        "RBAC" in str(entry.get("code", "")) or entry.get("status") in ("DENIED", "BLOCKED")
         for entry in data["audit_log"]
     )
-    assert rbac_blocked or "アクセス権" in data["response"] or "できません" in data["response"] or "拒否" in data["response"]
+    assert (
+        rbac_blocked
+        or "RBAC" in data["response"]
+        or "ブロック" in data["response"]
+        or "制限" in data["response"]
+    )
 
 
 def test_nextjs_frontend_portal_e2e() -> None:

@@ -254,9 +254,20 @@ async def submit_leave_request(
         })
         return block_event
 
-    # 2. Deterministic Guardrail Check: Balance Over-utilization (Vacation balance: 15 days / 120h for EMP-769, or 40h for EMP-9021)
+    # 2. Live MCP Balance & Guardrail Check (FR-3.3)
     normalized_type = "Vacation" if "vac" in leave_type.lower() else "Sick"
-    max_allowed_hours = 120.0 if auth_emp_id == DEFAULT_MCP_EMPLOYEE_ID else 40.0
+    max_allowed_hours = 40.0
+    if auth_emp_id == DEFAULT_MCP_EMPLOYEE_ID:
+        try:
+            raw_bal = await mcp_get_employee_balances(DEFAULT_MCP_EMPLOYEE_ID)
+            parsed_bal = parse_workweek_balances(raw_bal)
+            max_allowed_hours = (
+                parsed_bal["vacation_hours_remaining"]
+                if normalized_type == "Vacation"
+                else parsed_bal["sick_hours_remaining"]
+            )
+        except Exception:
+            max_allowed_hours = 120.0
     if requested_hours > max_allowed_hours:
         block_event = {
             "status": "GUARDRAIL_BLOCKED",
