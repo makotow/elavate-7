@@ -1,0 +1,304 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "MT-01-remote-work-monitor-procurement-saga",
+      "agent_data": {
+        "agents": {
+          "hr_orchestrator_agent": {
+            "agent_id": "hr_orchestrator_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "Enterprise HR Agentic Orchestrator for Policy Q&A, WorkWeek HCM, and ServiceImmediately ITSM."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Hi, am I eligible to order an external monitor for my home office under our remote work policy?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_orchestrator_agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "function_call": {
+                        "name": "search_hr_policies",
+                        "args": {
+                          "query": "remote work monitor eligibility home office equipment",
+                          "category_filter": "remote"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "tool",
+                "content": {
+                  "role": "tool",
+                  "parts": [
+                    {
+                      "function_response": {
+                        "name": "search_hr_policies",
+                        "response": {
+                          "status": "SUCCESS",
+                          "grounding_score": 0.95,
+                          "chunks": [
+                            {
+                              "doc_id": "POL-REM-001",
+                              "title": "Hybrid & Remote Work Equipment Policy v2.1",
+                              "section": "Section 2.2: Home Office Monitor & Hardware Eligibility",
+                              "citation_url": "https://hr-policies.corp.internal/docs/Remote_Work_Policy_v2.1.pdf#page=5",
+                              "content": "Employees whose official WorkWeek profile status is designated as 'Approved Remote' or 'Hybrid (>=3 days remote)' are eligible to order one standard 27-inch 4K ergonomic monitor (Catalog Item: STD-MON-27INCH) at company expense."
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_orchestrator_agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Yes, if your official WorkWeek profile status is designated as 'Approved Remote' or 'Hybrid (>=3 days remote)', you are eligible to order one standard 27-inch 4K ergonomic monitor (Catalog Item: STD-MON-27INCH) at company expense. Reference: [Hybrid & Remote Work Equipment Policy v2.1 - Section 2.2: Home Office Monitor & Hardware Eligibility](https://hr-policies.corp.internal/docs/Remote_Work_Policy_v2.1.pdf#page=5)"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Great! Please check my WorkWeek profile to confirm my remote eligibility and open the hardware procurement ticket in ServiceImmediately for the 27-inch 4K monitor."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "MT-02-medical-leave-and-hardware-saga-compensation",
+      "agent_data": {
+        "agents": {
+          "hr_orchestrator_agent": {
+            "agent_id": "hr_orchestrator_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "Enterprise HR Agentic Orchestrator for Policy Q&A, WorkWeek HCM, and ServiceImmediately ITSM."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "What is the official procedure for taking Short-Term Medical Leave?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_orchestrator_agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "function_call": {
+                        "name": "search_hr_policies",
+                        "args": {
+                          "query": "short-term medical leave policy procedure",
+                          "category_filter": "leave"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "tool",
+                "content": {
+                  "role": "tool",
+                  "parts": [
+                    {
+                      "function_response": {
+                        "name": "search_hr_policies",
+                        "response": {
+                          "status": "SUCCESS",
+                          "grounding_score": 0.95,
+                          "chunks": [
+                            {
+                              "doc_id": "POL-LEAVE-002",
+                              "title": "Global Leave & Time-Off Policy v4.2",
+                              "section": "Section 6.1: Short-Term Medical Leave (STD)",
+                              "citation_url": "https://hr-policies.corp.internal/docs/Leave_Policy_v4.2.pdf#page=18",
+                              "content": "Short-Term Medical Leave provides 100% base salary continuation for up to 12 weeks. Procedure: (1) Submit a Leave of Absence request in WorkWeek under 'Sick/Medical' leave. (2) Open an IT ServiceImmediately ticket. (3) Provide medical certification within 15 calendar days if absence exceeds 5 business days."
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_orchestrator_agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Under our Short-Term Medical Leave policy, you receive 100% base salary continuation for up to 12 weeks. You must: (1) Submit a Sick/Medical leave request in WorkWeek, (2) Open an IT ServiceImmediately ticket for access delegation or hardware support, and (3) Provide medical certification within 15 days if your absence exceeds 5 business days. Reference: [Global Leave & Time-Off Policy v4.2 - Section 6.1: Short-Term Medical Leave (STD)](https://hr-policies.corp.internal/docs/Leave_Policy_v4.2.pdf#page=18)"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Understood. Please submit my Sick leave request from 2026-09-24 to 2026-09-25 for 16 hours, and also open a Hardware repair ticket in ServiceImmediately because my laptop screen cracked [SIMULATE_SI_OUTAGE]."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "MT-03-international-relocation-london-saga",
+      "agent_data": {
+        "agents": {
+          "hr_orchestrator_agent": {
+            "agent_id": "hr_orchestrator_agent",
+            "agent_type": "LlmAgent",
+            "instruction": "Enterprise HR Agentic Orchestrator for Policy Q&A, WorkWeek HCM, and ServiceImmediately ITSM."
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "I am transferring to the London HQ office next month. What relocation allowance am I eligible for and what steps are required?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_orchestrator_agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "function_call": {
+                        "name": "search_hr_policies",
+                        "args": {
+                          "query": "international relocation allowance London HQ transfer checklist",
+                          "category_filter": "relocation"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "tool",
+                "content": {
+                  "role": "tool",
+                  "parts": [
+                    {
+                      "function_response": {
+                        "name": "search_hr_policies",
+                        "response": {
+                          "status": "SUCCESS",
+                          "grounding_score": 0.95,
+                          "chunks": [
+                            {
+                              "doc_id": "POL-REL-001",
+                              "title": "Global Mobility & Office Transfer Policy v5.0",
+                              "section": "Section 5.1: International Relocation Allowance & UK London Transfer",
+                              "citation_url": "https://hr-policies.corp.internal/docs/Relocation_Policy_v5.0.pdf#page=22",
+                              "content": "Employees transferring internationally to the London HQ Office (LON-HQ-BLDG1) are entitled to a lump-sum Relocation Allowance of USD 10,000. Mandatory Checklist: (1) Update your residential address and phone number in WorkWeek. (2) Submit a Facilities Security ticket in ServiceImmediately specifying LON-HQ-BLDG1."
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "hr_orchestrator_agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "For an international transfer to the London HQ Office (Building Code: LON-HQ-BLDG1), you are entitled to a lump-sum Relocation Allowance of USD 10,000. You must complete two steps: (1) Update your residential address and phone number in WorkWeek, and (2) Submit a Facilities Security badge access ticket in ServiceImmediately for LON-HQ-BLDG1. Reference: [Global Mobility & Office Transfer Policy v5.0 - Section 5.1: International Relocation Allowance & UK London Transfer](https://hr-policies.corp.internal/docs/Relocation_Policy_v5.0.pdf#page=22)"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "turn_index": 1,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Please go ahead and update my WorkWeek address to '221B Baker Street, London, UK' with my new phone number +44-20-7946-0921 (please repeat my new phone number in your confirmation so I can verify Cloud SDP redaction), and open the Facilities badge access ticket for LON-HQ-BLDG1."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
