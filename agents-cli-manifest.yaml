@@ -1,0 +1,15 @@
+name: hr-agentic-solution
+version: 1.1.0
+description: HR Agentic Solution (MVP 1) built with Google ADK 2.8 and Gemini Enterprise Agent Platform
+agent:
+  framework: adk
+  directory: app
+  entry_point: app.agent:root_agent
+deployment:
+  target: agent_runtime
+  project_id: elavate-508800
+  region: us-central1
+evaluation:
+  config_path: tests/eval/eval_config.yaml
+  dataset_dir: tests/eval/datasets
+
