@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HR Agentic Solution (MVP 1) | Google ADK & Vertex AI",
-  description: "Enterprise HR Agentic Assistant powered by Google Agent Development Kit 2.8 & Gemini Enterprise Agent Platform",
+  title: "Elevate Workplace Portal | Google ADK 2.9 & Gemini 3.8 Flash",
+  description: "Enterprise HR & IT Agentic Concierge powered by Google Agent Development Kit 2.9, Gemini 3.8 Flash & FastMCP",
 };
 
 export default function RootLayout({
