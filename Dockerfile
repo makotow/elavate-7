@@ -21,6 +21,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application source
 COPY app ./app
+COPY knowledge ./knowledge
 COPY agents-cli-manifest.yaml ./
 
 # Sync project itself
