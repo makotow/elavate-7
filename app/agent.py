@@ -77,16 +77,21 @@ root_agent = Agent(
     ),
 )
 
-_fallback_agent = Agent(
-    name="hr_orchestrator_fallback_agent",
-    model="gemini-2.5-flash",
-    description="Enterprise HR Agentic Orchestrator fallback agent.",
-    instruction=SYSTEM_INSTRUCTION,
-    tools=ALL_TOOLS,
-    generate_content_config=types.GenerateContentConfig(
-        temperature=0.0,
-    ),
-)
+FALLBACK_MODELS = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash"]
+
+_fallback_agents: list[Agent] = [
+    Agent(
+        name=f"hr_orchestrator_fallback_{m.replace('.', '_').replace('-', '_')}",
+        model=m,
+        description=f"Enterprise HR Agentic Orchestrator fallback agent ({m}).",
+        instruction=SYSTEM_INSTRUCTION,
+        tools=ALL_TOOLS,
+        generate_content_config=types.GenerateContentConfig(
+            temperature=0.0,
+        ),
+    )
+    for m in FALLBACK_MODELS
+]
 
 # Shared session service for local execution & evaluation
 _session_service = InMemorySessionService()
@@ -125,17 +130,21 @@ async def run_hr_agent_turn(
             "audit_log": list(tool_execution_audit_log),
         }
 
-    # 2. Execute ADK Runner with automatic fallback on PREFILL_QUEUE_OVERLOADED
-    response_parts: list[str] = []
-    new_msg = types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
+    # 2. Execute ADK Runner with automatic high-availability failover across Gemini 3.8 -> 3.7 -> 3.6 -> 3.5 Flash
+    import asyncio
+    import logging
+    logger = logging.getLogger(__name__)
 
-    try:
+    async def _execute_runner(agent_instance: Agent, employee_id: str, session_id: str, prompt: str) -> list[str]:
+        """Helper to execute ADK Runner and collect text parts."""
         runner = Runner(
-            agent=root_agent,
+            agent=agent_instance,
             app_name="app",
             session_service=_session_service,
             auto_create_session=True,
         )
+        parts: list[str] = []
+        new_msg = types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
         async for event in runner.run_async(
             user_id=employee_id,
             session_id=session_id,
@@ -144,24 +153,30 @@ async def run_hr_agent_turn(
             if event.content and event.content.parts:
                 for part in event.content.parts:
                     if part.text:
-                        response_parts.append(part.text)
-    except Exception:
-        response_parts.clear()
-        fallback_runner = Runner(
-            agent=_fallback_agent,
-            app_name="app",
-            session_service=_session_service,
-            auto_create_session=True,
-        )
-        async for event in fallback_runner.run_async(
-            user_id=employee_id,
-            session_id=f"{session_id}-fb",
-            new_message=new_msg,
-        ):
-            if event.content and event.content.parts:
-                for part in event.content.parts:
-                    if part.text:
-                        response_parts.append(part.text)
+                        parts.append(part.text)
+        return parts
+
+    response_parts: list[str] = []
+    candidate_chain = [root_agent] + _fallback_agents
+    last_exc: Exception | None = None
+
+    for idx, agent_candidate in enumerate(candidate_chain):
+        try:
+            sess_suffix = "" if idx == 0 else f"-fb{idx}"
+            response_parts = await asyncio.wait_for(
+                _execute_runner(agent_candidate, employee_id, f"{session_id}{sess_suffix}", prompt),
+                timeout=18.0,
+            )
+            break
+        except Exception as exc:
+            last_exc = exc
+            next_model = candidate_chain[idx + 1].model if idx + 1 < len(candidate_chain) else "None"
+            logger.warning(
+                f"Model ({agent_candidate.model}) hit quota/timeout ({exc}); failing over to {next_model}."
+            )
+
+    if not response_parts and last_exc:
+        raise last_exc
 
     raw_response = "\n".join(response_parts).strip()
 

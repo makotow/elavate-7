@@ -25,6 +25,7 @@ from app.mcp_client import (
     MCP_TOKEN,
     WORKWEEK_MCP_URL,
     SERVICE_IMMEDIATELY_MCP_URL,
+    get_dynamic_mcp_employee_id,
     get_live_mcp_state,
 )
 
@@ -45,7 +46,7 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     prompt: str = Field(..., description="User natural language request")
-    employee_id: str = Field(default=DEFAULT_MCP_EMPLOYEE_ID, description="Authenticated Employee ID")
+    employee_id: str = Field(default="", description="Authenticated Employee ID (dynamically resolved from MCP token if omitted)")
     session_id: str = Field(default="web-session-01", description="Conversation Session ID")
 
 
@@ -57,6 +58,7 @@ async def health_check() -> dict[str, Any]:
         "service": "hr-agentic-solution-mvp1",
         "adk_version": "2.9.1",
         "model": "gemini-3.8-flash",
+        "fallback_models": ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash"],
         "gcp_project": "elavate-508800",
         "gcp_location": os.environ.get("GOOGLE_CLOUD_LOCATION", "global"),
         "mcp_enabled": True,
@@ -66,13 +68,15 @@ async def health_check() -> dict[str, Any]:
 
 @app.get("/api/mcp-status")
 async def mcp_status_check() -> dict[str, Any]:
-    """Returns the live connection status of both WorkWeek and ServiceImmediately MCP servers."""
+    """Returns the live connection status and dynamically resolved employee ID from the MCP token."""
+    dynamic_emp_id = await get_dynamic_mcp_employee_id()
     return {
         "status": "connected",
         "transport": "Streamable HTTP (FastMCP)",
         "workweek_mcp_url": WORKWEEK_MCP_URL,
         "service_immediately_mcp_url": SERVICE_IMMEDIATELY_MCP_URL,
-        "authenticated_employee_id": DEFAULT_MCP_EMPLOYEE_ID,
+        "authenticated_employee_id": dynamic_emp_id,
+        "id_resolution_method": "FastMCP get_current_employee_id (Dynamic Token Binding)",
         "token_active": True,
         "token_fingerprint": MCP_TOKEN[:8] + "..." + MCP_TOKEN[-4:],
     }
@@ -83,8 +87,11 @@ async def chat_endpoint(
     req: ChatRequest,
     x_composite_token: str | None = Header(default=None, alias="X-Composite-Token"),
 ) -> dict[str, Any]:
-    """Executes an HR Agent turn with Composite Token authentication and SPII redaction."""
-    emp_id = req.employee_id.strip().upper() if req.employee_id else DEFAULT_MCP_EMPLOYEE_ID
+    """Executes an HR Agent turn with dynamic MCP token identity binding and SPII redaction."""
+    if req.employee_id and req.employee_id.strip().upper() != "AUTO":
+        emp_id = req.employee_id.strip().upper()
+    else:
+        emp_id = await get_dynamic_mcp_employee_id()
 
     # If X-Composite-Token header is provided, cryptographically verify it (FR-3.1)
     if x_composite_token:
@@ -117,13 +124,22 @@ async def chat_endpoint(
 
 
 @app.get("/api/state")
-async def get_system_state(employee_id: str = DEFAULT_MCP_EMPLOYEE_ID) -> dict[str, Any]:
-    """Returns live state of WorkWeek HCM and ServiceImmediately ITSM via Model Context Protocol (MCP)."""
-    emp_id = employee_id.strip().upper() if employee_id else DEFAULT_MCP_EMPLOYEE_ID
+async def get_system_state(employee_id: str = "") -> dict[str, Any]:
+    """Returns live state of WorkWeek HCM and ServiceImmediately ITSM via Model Context Protocol (MCP).
+    If employee_id is omitted or set to AUTO, dynamically resolves it from the remote FastMCP server via X-MCP-Token.
+    """
+    dynamic_mcp_id = await get_dynamic_mcp_employee_id()
+    emp_id = (
+        employee_id.strip().upper()
+        if (employee_id and employee_id.strip().upper() != "AUTO")
+        else dynamic_mcp_id
+    )
 
-    if emp_id == DEFAULT_MCP_EMPLOYEE_ID:
+    if emp_id == dynamic_mcp_id or emp_id == DEFAULT_MCP_EMPLOYEE_ID:
         # Fetch directly from live FastMCP servers
-        return await get_live_mcp_state(emp_id)
+        state_data = await get_live_mcp_state(emp_id)
+        state_data["id_resolution_method"] = "FastMCP get_current_employee_id (Dynamic Token Binding)"
+        return state_data
     else:
         # Fallback to local mock for legacy test cases (e.g. EMP-9021 in test_agent_e2e.py)
         profile = workweek_db.get_profile(emp_id)

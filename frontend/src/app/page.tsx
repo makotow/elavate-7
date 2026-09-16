@@ -141,7 +141,7 @@ const QUICK_ACTIONS = [
 ];
 
 export default function EnterpriseWorkplacePortal() {
-  const [employeeId, setEmployeeId] = useState<string>("EMP-769");
+  const [employeeId, setEmployeeId] = useState<string>("");
   const [inputPrompt, setInputPrompt] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -163,21 +163,23 @@ export default function EnterpriseWorkplacePortal() {
       id: "welcome-message",
       role: "assistant",
       content:
-        "Makotow さん、こんにちは！Elevate Enterprise AI コンシェルジュへようこそ。\n\nWorkWeek HCM（有給残高・休暇申請・連絡先管理）および ServiceImmediately（IT/総務サポートチケット管理）と **Model Context Protocol (MCP)** 経由で常時連携しています。\n\n社内人事規程の検索・引用、休暇の申請、IT備品・修理チケットの起票など、何でも自然な言葉でお気軽にお申し付けください。",
-      employee_id: "EMP-769",
+        "こんにちは！Elevate Enterprise AI コンシェルジュへようこそ。\n\nWorkWeek HCM（有給残高・休暇申請・連絡先管理）および ServiceImmediately（IT/総務サポートチケット管理）と **Model Context Protocol (MCP)** 経由で常時連携しています。\n\n社内人事規程の検索・引用、休暇の申請、IT備品・修理チケットの起票など、何でも自然な言葉でお気軽にお申し付けください。",
+      employee_id: "",
       timestamp: "09:00",
     },
   ]);
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Fetch live state via MCP
+  // Fetch live state via MCP (dynamically resolving employee ID from MCP token)
   const fetchLiveState = async () => {
     setIsRefreshing(true);
     try {
-      const res = await fetch(`/api/state?employee_id=${encodeURIComponent(employeeId)}`);
+      const query = employeeId ? `?employee_id=${encodeURIComponent(employeeId)}` : "";
+      const res = await fetch(`/api/state${query}`);
       if (res.ok) {
         const data = await res.json();
+        if (data.employee_id) setEmployeeId(data.employee_id);
         if (data.profile) setProfile(data.profile);
         if (data.leave_balances) setBalances(data.leave_balances);
         if (data.leave_requests) setLeaveRequests(data.leave_requests);
@@ -192,7 +194,7 @@ export default function EnterpriseWorkplacePortal() {
 
   useEffect(() => {
     fetchLiveState();
-  }, [employeeId]);
+  }, []);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -365,8 +367,11 @@ export default function EnterpriseWorkplacePortal() {
               <div className="text-left hidden sm:block">
                 <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <span>{profile?.full_name || "Makotow Employee"}</span>
-                  <span className="text-[10px] font-mono bg-slate-200/80 text-slate-700 px-1.5 py-0.2 rounded">
-                    {employeeId}
+                  <span
+                    className="text-[10px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded"
+                    title="FastMCP get_current_employee_id ツールにより X-MCP-Token から動的に解決された従業員ID"
+                  >
+                    {employeeId || "MCP 照会中..."}
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-500">

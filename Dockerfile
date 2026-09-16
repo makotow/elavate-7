@@ -11,7 +11,7 @@ ENV UV_COMPILE_BYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080 \
     GOOGLE_CLOUD_PROJECT=elavate-508800 \
-    GOOGLE_CLOUD_LOCATION=us-central1
+    GOOGLE_CLOUD_LOCATION=global
 
 # Copy dependency files first for layer caching
 COPY pyproject.toml uv.lock README.md ./

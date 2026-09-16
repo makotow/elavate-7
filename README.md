@@ -33,6 +33,18 @@ Google Cloud **Gemini Enterprise Agent Platform** および **Google Agent Devel
 
 ---
 
+## ☁️ Google Cloud 本番デプロイ済み環境 (Production Endpoints on `elavate-508800`)
+
+本システムは Google Cloud プロジェクト **`elavate-508800`** (`us-central1`) 上の **Cloud Run** にてフルスタック稼働しています。
+
+| コンポーネント | サービス名 | Cloud Run エンドポイント URL | 認証・セキュリティ保護 |
+| :--- | :--- | :--- | :--- |
+| **Web ポータル (Frontend)** | `hr-agent-frontend` | [https://hr-agent-frontend-771506988772.us-central1.run.app](https://hr-agent-frontend-771506988772.us-central1.run.app) | HTTPS / Next.js Dynamic Server Proxy |
+| **ADK API サーバー (Backend)** | `hr-agent-backend` | [https://hr-agent-backend-771506988772.us-central1.run.app](https://hr-agent-backend-771506988772.us-central1.run.app) | HMAC-SHA256 Composite Token & Secret Manager |
+| **ヘルスチェック API** | `GET /health` | [https://hr-agent-backend-771506988772.us-central1.run.app/health](https://hr-agent-backend-771506988772.us-central1.run.app/health) | Vertex AI / MCP 稼働ステータス |
+
+---
+
 ## 🚀 ローカル稼働手順 (Local Quickstart)
 
 Python 仮想環境（`.venv`）を利用してローカルでバックエンド API・Web ポータル・評価スイートを実行できます。

@@ -71,10 +71,28 @@ async def _execute_mcp_tool(
 # WorkWeek MCP Operations
 # =====================================================================
 
+_cached_mcp_employee_id: Optional[str] = None
+
+
 async def mcp_get_current_employee_id() -> str:
     """Fetches the current employee ID associated with the MCP token."""
     res = await _execute_mcp_tool(WORKWEEK_MCP_URL, "get_current_employee_id", {})
     return res.strip() if res else DEFAULT_MCP_EMPLOYEE_ID
+
+
+async def get_dynamic_mcp_employee_id(force_refresh: bool = False) -> str:
+    """Dynamically resolves the authenticated employee ID from the remote FastMCP server via X-MCP-Token."""
+    global _cached_mcp_employee_id
+    if _cached_mcp_employee_id and not force_refresh:
+        return _cached_mcp_employee_id
+    try:
+        resolved_id = await mcp_get_current_employee_id()
+        if resolved_id and resolved_id.startswith("EMP-"):
+            _cached_mcp_employee_id = resolved_id
+            return resolved_id
+    except Exception as exc:
+        logger.warning(f"Dynamic MCP employee ID resolution warning: {exc}")
+    return _cached_mcp_employee_id or DEFAULT_MCP_EMPLOYEE_ID
 
 
 async def mcp_get_employee_balances(employee_id: str = DEFAULT_MCP_EMPLOYEE_ID) -> str:
